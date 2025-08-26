@@ -1,0 +1,44 @@
+﻿services:
+  postgres:
+    image: postgres:16
+    container_name: banking-fraud-platform-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: banking-fraud-platform-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+
+  api:
+    build: .
+    container_name: banking-fraud-platform-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      - postgres
+    volumes:
+      # Mount the WHOLE repo into /app inside the container
+      - ./:/app
+
+  worker:
+    build: .
+    container_name: banking-fraud-platform-worker
+    command: python -m app.flows.worker
+    env_file: .env
+    depends_on:
+      - postgres
+    volumes:
+      - ./app:/app/app:ro
+      - ./app/ml/models:/app/app/ml/models  # <- make sure this is added!
