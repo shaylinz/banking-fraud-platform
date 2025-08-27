@@ -27,6 +27,7 @@ jobs:
 
       - name: Run tests
         env:
-          SKIP_MODEL_STARTUP: "1"
+          SKIP_MODEL_STARTUP: "1"              # keeps your app from loading the model in CI
+          PYTHONPATH: ${{ github.workspace }}  # <<< makes "import app..." work
         run: |
           pytest -q tests
