@@ -1,4 +1,4 @@
-name: Build & Push API image
+name: CI - Test, Build & Push
 
 on:
   push:
@@ -6,11 +6,29 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/test-api.yml   # <— reuse your existing test job (or copy steps here)
+    name: Run API tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q tests
+        env:
+          # Needed so 'import app....' works in CI
+          PYTHONPATH: ${{ github.workspace }}
+          # Prevent startup from loading a DB/model
+          SKIP_MODEL_STARTUP: "1"
 
   build:
-    name: Build & push
-    needs: [test]
+    name: Build & Push API image
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
