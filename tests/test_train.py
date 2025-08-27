@@ -1,6 +1,7 @@
 # tests/test_train.py
 
 from app.ml.train import main as train_main
+# from app.etl.features import load_training_data
 from app.etl.features import load_training_data
 import os
 
