@@ -13,19 +13,21 @@ cd banking-fraud-platform
 2️⃣ Create .env file
 Create a .env file in the root folder with:
 
-env
-Copy code
 POSTGRES_USER=airflow
 POSTGRES_PASSWORD=airflow
 POSTGRES_DB=airflow
+
+
+
 3️⃣ Build and start everything
-bash
-Copy code
+
 docker compose up -d --build
+
+
 4️⃣ Check running containers
-bash
-Copy code
+
 docker compose ps
+
 You should see services: postgres, pgadmin, airflow-webserver, airflow-scheduler, api, worker.
 
 🌐 Access the services
@@ -62,7 +64,7 @@ Connect to the airflow database.
 Run queries to see pipeline results.
 
 🛑 Stop everything
-bash
-Copy code
+
 docker compose down -v
+
 This will stop and remove all containers, networks, and volumes.
