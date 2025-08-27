@@ -3,13 +3,18 @@
     image: postgres:16
     container_name: banking-fraud-platform-postgres
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
     ports:
       - "5432:5432"
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10    
 
   pgadmin:
     image: dpage/pgadmin4
@@ -41,4 +46,47 @@
       - postgres
     volumes:
       - ./app:/app/app:ro
-      - ./app/ml/models:/app/app/ml/models  # <- make sure this is added!
+      - ./app/ml/models:/app/app/ml/models
+
+# ... keep postgres, pgadmin, api, worker as you already have ...
+  airflow-webserver:
+    image: apache/airflow:2.9.2-python3.11
+    container_name: banking-fraud-platform-airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+        until pg_isready -h postgres -p 5432 -U airflow; do echo 'waiting for postgres'; sleep 1; done &&
+        (airflow db migrate || airflow db init) &&
+        airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.org --password admin || true &&
+        exec airflow webserver
+      "
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.2-python3.11
+    container_name: banking-fraud-platform-airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    command: >
+      bash -c "
+        until pg_isready -h postgres -p 5432 -U airflow; do echo 'waiting for postgres'; sleep 1; done &&
+        (airflow db migrate || airflow db init) &&
+        exec airflow scheduler
+      "
+

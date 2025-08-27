@@ -1,0 +1,19 @@
+{
+  "model_name": "fraud_logreg",
+  "version": "20250827154056",
+  "features": [
+    "amount",
+    "hour",
+    "is_night",
+    "rolling_amt_1h",
+    "rolling_cnt_1h",
+    "channel_onehot",
+    "country_onehot"
+  ],
+  "metrics": {
+    "roc_auc": 0.6416466529459468,
+    "pr_auc": 0.03444959723491755
+  },
+  "saved_at": "2025-08-27T15:40:58.190170Z",
+  "artifact_path": "app/ml/models/fraud_logreg_20250827154056.joblib"
+}
